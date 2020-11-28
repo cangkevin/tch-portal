@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  tch-portal:
+    build: .
+    image: tch-portal
+    ports:
+      - "8007:8765"
+    environment:
+      PORT: '8765'
+    restart: unless-stopped

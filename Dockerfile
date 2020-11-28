@@ -26,6 +26,6 @@ COPY ./backend/requirements.txt ./
 RUN pip install --no-cache -r requirements.txt && \
     pip install --no-cache gunicorn
 COPY ./backend .
-CMD gunicorn -b 0.0.0.0:5000 tch_portal:app --daemon && \
+CMD gunicorn -b 0.0.0.0:5000 -t 150 --graceful-timeout 150 tch_portal:app --daemon && \
       sed -i -e 's/$PORT/'"$PORT"'/g' /etc/nginx/conf.d/default.conf && \
       nginx -g 'daemon off;'
