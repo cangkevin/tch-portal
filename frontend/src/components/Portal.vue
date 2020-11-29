@@ -24,7 +24,9 @@
     </b-row>
 
     <b-row>
-      <vue-table-dynamic :params="params"></vue-table-dynamic>
+      <b-col v-for="(param, index) in params" :key="index">
+        <vue-table-dynamic :params="param"></vue-table-dynamic>
+      </b-col>
     </b-row>
     <FlashMessage></FlashMessage>
   </b-container>
@@ -43,13 +45,7 @@ export default {
   data() {
     return {
       loading: false,
-      params: {
-        data: [],
-        header: 'row',
-        border: true,
-        stripe: true,
-        enableSearch: true,
-      },
+      params: [],
       days: [],
     };
   },
@@ -82,14 +78,24 @@ export default {
     onSubmit() {
       if (this.days.length > 0) {
         this.loading = true;
+
         const path = '/schedule';
         axios.post(path, {
           dates: Array.from(this.days, (d) => d.id).sort(),
         }, { withCredentials: true })
           .then((response) => {
+            this.params = Array.from(response.data.schedules, (schedule) => (
+              {
+                data: schedule,
+                header: 'row',
+                border: true,
+                stripe: true,
+                enableSearch: true,
+                sort: [0, 1],
+              }
+            ));
+
             this.loading = false;
-            this.params.data = response.data.schedules;
-            this.params.sort = Array.from(Array(this.params.data[0].length + 1).keys());
           })
           .catch((error) => {
             this.loading = false;

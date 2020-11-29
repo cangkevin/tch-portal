@@ -28,7 +28,8 @@ def set_credentials(username, password):
         soup = BeautifulSoup(r.text, "lxml")
 
         login_form_inputs = [
-            ((input.get("name"), input.get("value"))) for input in soup.find_all("input")
+            ((input.get("name"), input.get("value")))
+            for input in soup.find_all("input")
         ]
         login_form_inputs.append(("ctl00$bodyPlaceHolder$Login1$UserName", username))
         login_form_inputs.append(("ctl00$bodyPlaceHolder$Login1$Password", password))
@@ -72,7 +73,7 @@ def set_credentials(username, password):
         raise exceptions.InvalidCredentialsError("Unable to login to TCH")
 
 
-def _response_hook(resp, *args, **kwargs):
+def __response_hook(resp, *args, **kwargs):
     strainer = SoupStrainer(
         "table",
         attrs={
@@ -91,14 +92,20 @@ def _response_hook(resp, *args, **kwargs):
 
 
 def get_schedules(date):
-    schedule_payloads = [{**payload, "ctl00$ctl00$ctl00$bodyPlaceHolder$MasterContentPlaceHolder$SchedulingMasterContentPlaceHolder$txtDate": date} for payload in payloads]
+    schedule_payloads = [
+        {
+            **payload,
+            "ctl00$ctl00$ctl00$bodyPlaceHolder$MasterContentPlaceHolder$SchedulingMasterContentPlaceHolder$txtDate": date,
+        }
+        for payload in payloads
+    ]
     logger.info("Getting all employee schedules for date: %s", date)
 
     futures = [
         session.post(
             "https://clairvia.texaschildrens.org/ClairviaWeb/WebScheduling/Tools/Locator.aspx",
             post_data,
-            hooks={"response": _response_hook},
+            hooks={"response": __response_hook},
         )
         for post_data in schedule_payloads
     ]
@@ -107,20 +114,25 @@ def get_schedules(date):
     df = pd.DataFrame(
         data, columns=["Employee", "Skill", "Assignment", date, "Start", "End"]
     )
-    df.drop(['Skill', 'Assignment', 'Start', 'End'], axis=1, inplace=True)
+    df.drop(["Skill", "Assignment", "Start", "End"], axis=1, inplace=True)
 
     return df
 
 
+def __process_df(df):
+    sorted_df = df.sort_values(["Employee"])
+    headers = list(sorted_df)
+    data = sorted_df.to_numpy().tolist()
+    data.insert(0, headers)
+    return data
+
+
 def get_schedules_for_dates(dates):
-    formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y") for date in dates]
+    formatted_dates = [
+        datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y") for date in dates
+    ]
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_schedules, date) for date in formatted_dates]
         dfs = [f.result() for f in futures]
-
-        final_df = pd.concat(dfs).fillna('').sort_values(['Employee'])
-        headers = list(final_df)
-        data = final_df.to_numpy().tolist()
-        logger.info("Records found: %d", len(data))
-        data.insert(0, headers)
-        return {'schedules': data}
+        data = [__process_df(df) for df in dfs]
+        return {"schedules": data}

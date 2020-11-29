@@ -29,6 +29,7 @@ from website.core import bp as core_bp
 
 import datetime
 
+
 def create_app(config_object=Config):
     app = Flask(__name__)
     app.permanent_session_lifetime = datetime.timedelta(minutes=10)
@@ -37,4 +38,3 @@ def create_app(config_object=Config):
     app.logger.info("Registering blueprint %s", core_bp.name)
     app.register_blueprint(core_bp)
     return app
- 

@@ -8,4 +8,3 @@ services:
       - "8007:8765"
     environment:
       PORT: '8765'
-    restart: unless-stopped
