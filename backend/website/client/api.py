@@ -120,11 +120,16 @@ def get_schedules(date):
 
 
 def __process_df(df):
-    sorted_df = df.sort_values(["Employee"])
-    headers = list(sorted_df)
-    data = sorted_df.to_numpy().tolist()
+    headers = df.columns.values.tolist()
+    data = df.to_numpy().tolist()
     data.insert(0, headers)
-    return data
+
+    tasks = df.iloc[:, -1].value_counts().sort_index()
+    tasks_names = tasks.index.tolist()
+    tasks_counts = tasks.values.tolist()
+    metrics = [[task, str(count)] for task, count in zip(tasks_names, tasks_counts)]
+    metrics.insert(0, ["Task", "Count"])
+    return {"metrics": metrics, "schedules": data}
 
 
 def get_schedules_for_dates(dates):
@@ -135,4 +140,4 @@ def get_schedules_for_dates(dates):
         futures = [executor.submit(get_schedules, date) for date in formatted_dates]
         dfs = [f.result() for f in futures]
         data = [__process_df(df) for df in dfs]
-        return {"schedules": data}
+        return {"data": data}

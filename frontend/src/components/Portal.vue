@@ -25,7 +25,12 @@
 
     <b-row>
       <b-col v-for="(param, index) in params" :key="index">
-        <vue-table-dynamic :params="param"></vue-table-dynamic>
+        <b-row cols="1">
+          <b-col>
+            <vue-table-dynamic :params="param.params"></vue-table-dynamic>
+            <vue-table-dynamic :params="param.metrics"></vue-table-dynamic>
+          </b-col>
+        </b-row>
       </b-col>
     </b-row>
     <FlashMessage></FlashMessage>
@@ -46,6 +51,7 @@ export default {
     return {
       loading: false,
       params: [],
+      metrics: [],
       days: [],
     };
   },
@@ -84,16 +90,27 @@ export default {
           dates: Array.from(this.days, (d) => d.id).sort(),
         }, { withCredentials: true })
           .then((response) => {
-            this.params = Array.from(response.data.schedules, (schedule) => (
+            this.params = Array.from(response.data.data, (date) => (
               {
-                data: schedule,
-                header: 'row',
-                border: true,
-                stripe: true,
-                enableSearch: true,
-                sort: [0, 1],
+                params: {
+                  data: date.schedules,
+                  header: 'row',
+                  border: true,
+                  stripe: true,
+                  enableSearch: true,
+                  sort: [0, 1],
+                },
+                metrics: {
+                  data: date.metrics,
+                  header: 'row',
+                  border: true,
+                  stripe: true,
+                  enableSearch: true,
+                  sort: [0, 1],
+                },
               }
             ));
+            console.log(this.params);
 
             this.loading = false;
           })
