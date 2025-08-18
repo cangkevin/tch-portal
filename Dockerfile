@@ -8,10 +8,10 @@ COPY ./frontend .
 RUN npm run build
 
 # production
-FROM nginx:stable-alpine as production
+FROM nginx:1.19.10-alpine as production
 WORKDIR /app
 RUN echo "@community http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    apk add --no-cache py3-pandas@community py3-numpy@community
+    apk add --no-cache py3-pandas>1.1.4 py3-numpy>1.19.4
 RUN apk --update add --no-cache python3 g++ python3-dev musl-dev libxslt-dev && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
